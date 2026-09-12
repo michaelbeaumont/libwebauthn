@@ -1,4 +1,4 @@
-use aes::cipher::{generic_array::GenericArray, BlockDecrypt, KeyInit};
+use aes::cipher::{BlockCipherDecrypt, KeyInit};
 use aes::{Aes256, Block};
 use hkdf::Hkdf;
 use sha2::Sha256;
@@ -46,7 +46,7 @@ pub fn trial_decrypt_advert(eid_key: &[u8], candidate_advert: &[u8]) -> Option<[
     }
 
     let mac_key = eid_key.get(32..)?;
-    let advert_body = advert.get(..16)?;
+    let advert_body = advert.first_chunk::<16>()?;
     let advert_tag = advert.get(16..)?;
     let expected_tag = hmac_sha256(mac_key, advert_body).ok()?;
     let expected_tag_truncated = expected_tag.get(..4)?;
@@ -56,9 +56,9 @@ pub fn trial_decrypt_advert(eid_key: &[u8], candidate_advert: &[u8]) -> Option<[
         return None;
     }
 
-    let aes_key = eid_key.get(..32)?;
-    let cipher = Aes256::new(aes_key.try_into().ok()?);
-    let mut block = Block::clone_from_slice(advert_body);
+    let aes_key = eid_key.first_chunk::<32>()?;
+    let cipher = Aes256::new(aes_key.into());
+    let mut block = Block::from(*advert_body);
     cipher.decrypt_block(&mut block);
 
     if !reserved_bits_are_zero(&block) {
@@ -77,7 +77,7 @@ mod tests {
     use super::trial_decrypt_advert;
     use super::KeyPurpose;
     use crate::pin::hmac_sha256;
-    use aes::cipher::{generic_array::GenericArray, BlockEncrypt, KeyInit};
+    use aes::cipher::{BlockCipherEncrypt, KeyInit};
     use aes::{Aes256, Block};
 
     /// Builds a self-consistent (eid_key, 20-byte advert) pair for a given plaintext.
@@ -86,10 +86,10 @@ mod tests {
         for (i, b) in eid_key.iter_mut().enumerate() {
             *b = i as u8;
         }
-        let (aes_key, mac_key) = eid_key.split_at(32);
+        let (aes_key, mac_key) = eid_key.split_first_chunk::<32>().unwrap();
 
-        let cipher = Aes256::new(aes_key.try_into().unwrap());
-        let mut block = Block::clone_from_slice(&plaintext);
+        let cipher = Aes256::new(aes_key.into());
+        let mut block = Block::from(plaintext);
         cipher.encrypt_block(&mut block);
 
         let tag = hmac_sha256(mac_key, &block).unwrap();
