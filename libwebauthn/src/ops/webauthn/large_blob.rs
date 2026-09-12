@@ -514,7 +514,7 @@ fn entry_decrypts_under_key(entry: &Value, key: &[u8; 32]) -> bool {
     let mut ad = Vec::with_capacity(LARGE_BLOB_AD_PREFIX.len() + 8);
     ad.extend_from_slice(LARGE_BLOB_AD_PREFIX);
     ad.extend_from_slice(&os.to_le_bytes());
-    let cipher = Aes256Gcm::new(Key::<Aes256Gcm>::from_slice(key));
+    let cipher = Aes256Gcm::new(key.into());
     cipher
         .decrypt(nonce_obj, aes_gcm::aead::Payload { msg: ct, aad: &ad })
         .is_ok()
@@ -1692,7 +1692,7 @@ mod tests {
         let mut aad = Vec::new();
         aad.extend_from_slice(b"blob");
         aad.extend_from_slice(&4u64.to_le_bytes());
-        let cipher = Aes256Gcm::new(Key::<Aes256Gcm>::from_slice(&key));
+        let cipher = Aes256Gcm::new((&key).into());
         let ciphertext = cipher
             .encrypt(
                 (&nonce).into(),
@@ -1764,7 +1764,7 @@ mod tests {
         let mut ad = Vec::new();
         ad.extend_from_slice(LARGE_BLOB_AD_PREFIX);
         ad.extend_from_slice(&orig_size.to_le_bytes());
-        let cipher = Aes256Gcm::new(Key::<Aes256Gcm>::from_slice(&key));
+        let cipher = Aes256Gcm::new((&key).into());
         let compressed = cipher
             .decrypt(
                 (&nonce).into(),

@@ -57,7 +57,7 @@ pub fn trial_decrypt_advert(eid_key: &[u8], candidate_advert: &[u8]) -> Option<[
     }
 
     let aes_key = eid_key.get(..32)?;
-    let cipher = Aes256::new(GenericArray::from_slice(aes_key));
+    let cipher = Aes256::new(aes_key.try_into().ok()?);
     let mut block = Block::clone_from_slice(advert_body);
     cipher.decrypt_block(&mut block);
 
@@ -88,7 +88,7 @@ mod tests {
         }
         let (aes_key, mac_key) = eid_key.split_at(32);
 
-        let cipher = Aes256::new(GenericArray::from_slice(aes_key));
+        let cipher = Aes256::new(aes_key.try_into().unwrap());
         let mut block = Block::clone_from_slice(&plaintext);
         cipher.encrypt_block(&mut block);
 

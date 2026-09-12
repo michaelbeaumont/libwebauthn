@@ -182,7 +182,7 @@ async fn plant_large_blob_array(
 /// Encode one largeBlobMap entry per CTAP 2.2 §6.10.3.
 fn encode_entry(key: &[u8; 32], nonce: &[u8; 12], plaintext: &[u8]) -> Vec<u8> {
     use aes_gcm::aead::Aead;
-    use aes_gcm::{Aes256Gcm, Key, KeyInit, Nonce};
+    use aes_gcm::{Aes256Gcm, KeyInit};
     use flate2::write::DeflateEncoder;
     use flate2::Compression;
     use serde_cbor_2::value::Value as CborVal;
@@ -197,7 +197,7 @@ fn encode_entry(key: &[u8; 32], nonce: &[u8; 12], plaintext: &[u8]) -> Vec<u8> {
     }
     let mut ad = b"blob".to_vec();
     ad.extend_from_slice(&(plaintext.len() as u64).to_le_bytes());
-    let cipher = Aes256Gcm::new(Key::<Aes256Gcm>::from_slice(key));
+    let cipher = Aes256Gcm::new(key.into());
     let ciphertext = cipher
         .encrypt(
             nonce.into(),
