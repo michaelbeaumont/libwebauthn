@@ -55,7 +55,7 @@ publicsuffix = "2.3"
 url = "2.5"
 http = "1"
 maplit = "1.0.2"
-sha2 = "0.10.2"
+sha2 = "0.11"
 uuid = { version = "1.5.0", features = ["serde", "v4"] }
 async-trait = "0.1.36"
 futures = "0.3.5"
@@ -79,17 +79,17 @@ hidapi = { version = "2.4.1", default-features = false, features = [
     "linux-static-hidraw",
 ] }
 bitflags = "2.4.1"
-rand = "0.8.5"
-p256 = { version = "0.13.2", features = ["ecdh", "arithmetic", "serde"] }
+rand = "0.10"
+p256 = { version = "0.14", features = ["ecdh", "arithmetic", "serde"] }
 cosey = "0.4.0"
-spki = { version = "0.7", default-features = false, features = ["alloc"] }
-der = { version = "0.7", default-features = false, features = ["alloc", "derive", "oid"] }
-aes = "0.8.2"
-aes-gcm = "0.10"
+spki = { version = "0.8", default-features = false, features = ["alloc"] }
+der = { version = "0.8", default-features = false, features = ["alloc", "derive", "oid"] }
+aes = "0.9"
+aes-gcm = "0.11"
 flate2 = "1.0"
-hmac = "0.12.1"
-cbc = { version = "0.1", features = ["alloc"] }
-hkdf = "0.12"
+hmac = "0.13"
+cbc = { version = "0.2", features = ["alloc"] }
+hkdf = "0.13"
 zeroize = { version = "1.8", features = ["derive"] }
 text_io = "0.1"
 tungstenite = { version = "0.26.2" }

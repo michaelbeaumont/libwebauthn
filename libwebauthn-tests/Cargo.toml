@@ -17,19 +17,19 @@ fido-authenticator = { git = "https://github.com/Nitrokey/fido-authenticator.git
 interchange = "0.3.0"
 littlefs2 = "0.6.0"
 num_enum = "0.7.1"
-rand = "0.8.5"
+rand = "0.10"
 tracing = "0.1.29"
 trussed = { version = "0.1", features = ["virt"] }
 trussed-staging = { version = "0.3.0", features = ["chunked", "hkdf", "virt", "fs-info"] }
 
 [dev-dependencies]
-aes-gcm = "0.10"
+aes-gcm = "0.11"
 base64-url = "3.0.0"
 flate2 = "1.0"
-p256 = { version = "0.13.2", features = ["ecdsa"] }
+p256 = { version = "0.14", features = ["ecdsa"] }
 serde_bytes = "0.11.5"
 serde_cbor_2 = "0.13"
-sha2 = "0.10"
+sha2 = "0.11"
 tempfile = "3.21"
 test-log = "0.2"
 tokio = { version = "1.45", features = ["full"] }
