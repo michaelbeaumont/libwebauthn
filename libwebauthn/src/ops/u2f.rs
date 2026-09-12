@@ -56,7 +56,7 @@ impl UpgradableResponse<MakeCredentialResponse, MakeCredentialRequest> for Regis
         // Let coseEncodedCredentialPublicKey be the result of converting x9encodedUserPublicKey’s value
         // from ANS X9.62 / Sec-1 v2 uncompressed curve point representation [SEC1V2]
         // to COSE_Key representation ([RFC8152] Section 7).
-        let Ok(encoded_point) = p256::EncodedPoint::from_bytes(&self.public_key) else {
+        let Ok(encoded_point) = p256::Sec1Point::from_bytes(&self.public_key) else {
             error!(?self.public_key, "Failed to parse public key as SEC-1 v2 encoded point");
             return Err(WebAuthnError::Ctap(CtapError::Other));
         };

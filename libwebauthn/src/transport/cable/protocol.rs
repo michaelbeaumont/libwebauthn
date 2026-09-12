@@ -700,7 +700,8 @@ mod tests {
     use std::sync::Mutex;
 
     use async_trait::async_trait;
-    use p256::elliptic_curve::sec1::ToEncodedPoint;
+    use p256::elliptic_curve::sec1::ToSec1Point;
+    use p256::elliptic_curve::Generate;
 
     #[derive(Debug, Default)]
     struct RecordingStore {
@@ -743,7 +744,7 @@ mod tests {
         let authenticator_secret = SecretKey::generate_from_rng(&mut rand::rng());
         let authenticator_public_key = authenticator_secret
             .public_key()
-            .to_encoded_point(false)
+            .to_sec1_point(false)
             .as_bytes()
             .to_vec();
 

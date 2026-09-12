@@ -3,8 +3,8 @@ use std::sync::Arc;
 use std::time::SystemTime;
 
 use async_trait::async_trait;
-use p256::elliptic_curve::sec1::ToEncodedPoint;
-use p256::{NonZeroScalar, SecretKey};
+use p256::elliptic_curve::sec1::ToSec1Point;
+use p256::{elliptic_curve::Generate, NonZeroScalar, SecretKey};
 use rand::Rng;
 use serde::Serialize;
 use serde_bytes::ByteArray;
@@ -167,7 +167,7 @@ impl CableQrCodeDevice {
         let public_key: [u8; 33] = private_key
             .public_key()
             .as_affine()
-            .to_encoded_point(true)
+            .to_sec1_point(true)
             .as_bytes()
             .try_into()
             .map_err(|_| CableError::InvalidKey)?;

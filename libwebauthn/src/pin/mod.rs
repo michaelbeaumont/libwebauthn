@@ -23,8 +23,8 @@ use hkdf::Hkdf;
 use hmac::Mac;
 use icu_normalizer::ComposingNormalizerBorrowed;
 use p256::{
-    ecdh::EphemeralSecret, elliptic_curve::sec1::FromEncodedPoint, EncodedPoint,
-    PublicKey as P256PublicKey,
+    ecdh::EphemeralSecret, elliptic_curve::sec1::FromSec1Point, elliptic_curve::Generate,
+    PublicKey as P256PublicKey, Sec1Point,
 };
 use rand::{rng, RngExt, SeedableRng};
 use sha2::{Digest, Sha256};
@@ -214,8 +214,8 @@ where
             );
             PlatformError::CryptoError(String::from("pin/uv crypto operation failed"))
         })?;
-        let encoded_point = EncodedPoint::from_affine_coordinates(x.into(), y.into(), false);
-        let Some(peer_public_key) = P256PublicKey::from_encoded_point(&encoded_point).into() else {
+        let encoded_point = Sec1Point::from_affine_coordinates(x.into(), y.into(), false);
+        let Some(peer_public_key) = P256PublicKey::from_sec1_point(&encoded_point).into() else {
             error!("Failed to parse public key.");
             return Err(PlatformError::CryptoError(String::from(
                 "pin/uv crypto operation failed",
@@ -232,7 +232,7 @@ where
 
     /// getPublicKey()
     fn get_public_key(&self) -> Result<cose::PublicKey, PlatformError> {
-        let point = EncodedPoint::from(self.public_key());
+        let point = Sec1Point::from(self.public_key());
         let x_bytes = point.x().ok_or_else(|| {
             error!("Public key is the identity point");
             PlatformError::CryptoError("public key is the identity point".into())

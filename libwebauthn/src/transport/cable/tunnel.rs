@@ -187,7 +187,7 @@ pub(crate) async fn connect(
 mod tests {
     use super::*;
     use crate::transport::cable::known_devices::{ClientPayload, ClientPayloadHint};
-    use p256::NonZeroScalar;
+    use p256::{elliptic_curve::Generate, NonZeroScalar};
     use serde_bytes::ByteBuf;
 
     fn known_device_connection_type(public_key: Vec<u8>) -> CableTunnelConnectionType {
