@@ -15,9 +15,9 @@
 
 use std::time::Duration;
 
-use aes::cipher::{block_padding::NoPadding, BlockDecryptMut};
+use aes::cipher::{block_padding::NoPadding, BlockModeDecrypt};
 use async_trait::async_trait;
-use cbc::cipher::{BlockEncryptMut, KeyIvInit};
+use cbc::cipher::{BlockModeEncrypt, KeyIvInit};
 use cosey as cose;
 use hkdf::Hkdf;
 use hmac::{KeyInit as _, Mac};
@@ -267,7 +267,7 @@ impl PinUvAuthProtocol for PinUvAuthProtocolOne {
                 "pin/uv crypto operation failed",
             )));
         };
-        Ok(enc.encrypt_padded_vec_mut::<NoPadding>(plaintext))
+        Ok(enc.encrypt_padded_vec::<NoPadding>(plaintext))
     }
 
     #[instrument(skip_all)]
@@ -303,7 +303,7 @@ impl PinUvAuthProtocol for PinUvAuthProtocolOne {
                 "pin/uv crypto operation failed",
             )));
         };
-        let Ok(plaintext) = dec.decrypt_padded_vec_mut::<NoPadding>(ciphertext) else {
+        let Ok(plaintext) = dec.decrypt_padded_vec::<NoPadding>(ciphertext) else {
             error!("Unpad error while decrypting");
             return Err(PlatformError::CryptoError(String::from(
                 "pin/uv crypto operation failed",
@@ -404,7 +404,7 @@ impl PinUvAuthProtocol for PinUvAuthProtocolTwo {
                 "pin/uv crypto operation failed",
             )));
         };
-        let ct = enc.encrypt_padded_vec_mut::<NoPadding>(plaintext);
+        let ct = enc.encrypt_padded_vec::<NoPadding>(plaintext);
 
         // Return iv || ct.
         let mut out = Vec::from(iv);
@@ -440,7 +440,7 @@ impl PinUvAuthProtocol for PinUvAuthProtocolTwo {
                 "pin/uv crypto operation failed",
             )));
         };
-        let Ok(plaintext) = dec.decrypt_padded_vec_mut::<NoPadding>(ciphertext) else {
+        let Ok(plaintext) = dec.decrypt_padded_vec::<NoPadding>(ciphertext) else {
             error!("Unpad error while decrypting");
             return Err(PlatformError::CryptoError(String::from(
                 "pin/uv crypto operation failed",

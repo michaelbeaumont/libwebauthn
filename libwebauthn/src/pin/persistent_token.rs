@@ -2,7 +2,7 @@ use std::collections::HashMap;
 use std::fmt;
 use std::sync::Arc;
 
-use aes::cipher::{block_padding::NoPadding, BlockDecryptMut};
+use aes::cipher::{block_padding::NoPadding, BlockModeDecrypt};
 use async_trait::async_trait;
 use cbc::cipher::KeyIvInit;
 use hkdf::Hkdf;
@@ -154,7 +154,7 @@ pub(crate) fn decrypt_enc_identifier(
         error!("Invalid key or IV for AES-128-CBC encIdentifier decryption");
         return Err(PlatformError::InvalidDeviceResponse);
     };
-    let Ok(plaintext) = decryptor.decrypt_padded_vec_mut::<NoPadding>(ciphertext) else {
+    let Ok(plaintext) = decryptor.decrypt_padded_vec::<NoPadding>(ciphertext) else {
         error!("Decrypt error while recovering device identifier");
         return Err(PlatformError::InvalidDeviceResponse);
     };
@@ -250,11 +250,11 @@ pub(crate) fn build_enc_identifier(
     device_identifier: &[u8; 16],
     iv: &[u8; 16],
 ) -> Vec<u8> {
-    use aes::cipher::BlockEncryptMut;
+    use aes::cipher::BlockModeEncrypt;
     type Aes128CbcEncryptor = cbc::Encryptor<aes::Aes128>;
     let key = enc_identifier_key(token).expect("encIdentifier key derivation");
     let encryptor = Aes128CbcEncryptor::new_from_slices(&key, iv).expect("valid key/iv");
-    let ciphertext = encryptor.encrypt_padded_vec_mut::<NoPadding>(device_identifier);
+    let ciphertext = encryptor.encrypt_padded_vec::<NoPadding>(device_identifier);
     let mut enc = iv.to_vec();
     enc.extend_from_slice(&ciphertext);
     enc
