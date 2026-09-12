@@ -968,7 +968,6 @@ dependencies = [
  "fiat-crypto",
  "rustc_version",
  "subtle",
- "zeroize",
 ]
 
 [[package]]
@@ -2347,7 +2346,6 @@ dependencies = [
  "cbc 0.2.1",
  "cosey 0.4.0",
  "ctap-types 0.5.0",
- "curve25519-dalek",
  "dbus",
  "der 0.8.2",
  "flate2",
