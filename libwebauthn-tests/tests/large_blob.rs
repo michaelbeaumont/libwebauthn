@@ -200,7 +200,7 @@ fn encode_entry(key: &[u8; 32], nonce: &[u8; 12], plaintext: &[u8]) -> Vec<u8> {
     let cipher = Aes256Gcm::new(Key::<Aes256Gcm>::from_slice(key));
     let ciphertext = cipher
         .encrypt(
-            Nonce::from_slice(nonce),
+            nonce.into(),
             aes_gcm::aead::Payload {
                 msg: &compressed,
                 aad: &ad,

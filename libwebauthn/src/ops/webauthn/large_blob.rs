@@ -4,7 +4,7 @@ use std::io::Read;
 use std::time::Duration;
 
 use aes_gcm::aead::Aead;
-use aes_gcm::{Aes256Gcm, Key, KeyInit, Nonce};
+use aes_gcm::{Aes256Gcm, KeyInit, Nonce};
 use flate2::read::DeflateDecoder;
 use sha2::{Digest, Sha256};
 use tracing::{debug, trace, warn};
@@ -142,16 +142,13 @@ const LARGE_BLOB_ENTRY_ORIG_SIZE: i128 = 0x03;
 #[derive(Debug)]
 pub(crate) struct LargeBlobMapEntry {
     ciphertext: Vec<u8>,
-    nonce: Vec<u8>,
+    nonce: [u8; LARGE_BLOB_NONCE_LEN],
     orig_size: u64,
 }
 
 impl LargeBlobMapEntry {
     /// `Ok(None)` on AEAD failure (skip to next entry), `Err` only on structural problems.
     fn try_decrypt<E>(&self, key: &[u8; 32]) -> Result<Option<Vec<u8>>, LargeBlobError<E>> {
-        if self.nonce.len() != LARGE_BLOB_NONCE_LEN {
-            return Ok(None);
-        }
         if self.orig_size > LARGE_BLOB_MAX_ORIG_SIZE {
             warn!(
                 orig_size = self.orig_size,
@@ -165,10 +162,9 @@ impl LargeBlobMapEntry {
         ad.extend_from_slice(LARGE_BLOB_AD_PREFIX);
         ad.extend_from_slice(&self.orig_size.to_le_bytes());
 
-        let cipher = Aes256Gcm::new(Key::<Aes256Gcm>::from_slice(key));
-        let nonce = Nonce::from_slice(&self.nonce);
+        let cipher = Aes256Gcm::new(key.into());
         let plaintext_compressed = match cipher.decrypt(
-            nonce,
+            (&self.nonce).into(),
             aes_gcm::aead::Payload {
                 msg: &self.ciphertext,
                 aad: &ad,
@@ -260,7 +256,8 @@ fn parse_large_blob_array<E>(bytes: &[u8]) -> Result<Vec<LargeBlobMapEntry>, Lar
                 }
                 LARGE_BLOB_ENTRY_NONCE => {
                     if let crate::proto::ctap2::cbor::Value::Bytes(b) = v {
-                        nonce = Some(b);
+                        // Wrong length leaves this unset, so the entry is skipped below.
+                        nonce = <[u8; LARGE_BLOB_NONCE_LEN]>::try_from(b.as_slice()).ok();
                     }
                 }
                 LARGE_BLOB_ENTRY_ORIG_SIZE => {
@@ -288,19 +285,13 @@ fn parse_large_blob_array<E>(bytes: &[u8]) -> Result<Vec<LargeBlobMapEntry>, Lar
 /// Encrypt+compress one entry under `key`, returning the canonical CBOR map per CTAP 2.2 §6.10.3.
 pub(crate) fn encrypt_entry<E>(
     key: &[u8; 32],
-    nonce: &[u8],
+    nonce: &[u8; LARGE_BLOB_NONCE_LEN],
     plaintext: &[u8],
 ) -> Result<Vec<u8>, LargeBlobError<E>> {
     use flate2::write::DeflateEncoder;
     use flate2::Compression;
     use std::io::Write;
 
-    if nonce.len() != LARGE_BLOB_NONCE_LEN {
-        return Err(LargeBlobError::Corrupted(format!(
-            "nonce length {} != 12",
-            nonce.len()
-        )));
-    }
     let mut compressed = Vec::new();
     {
         let mut encoder = DeflateEncoder::new(&mut compressed, Compression::default());
@@ -316,8 +307,8 @@ pub(crate) fn encrypt_entry<E>(
     ad.extend_from_slice(LARGE_BLOB_AD_PREFIX);
     ad.extend_from_slice(&(plaintext.len() as u64).to_le_bytes());
 
-    let cipher = Aes256Gcm::new(Key::<Aes256Gcm>::from_slice(key));
-    let nonce_obj = Nonce::from_slice(nonce);
+    let cipher = Aes256Gcm::new(key.into());
+    let nonce_obj: &Nonce<_> = nonce.into();
     let ciphertext = cipher
         .encrypt(
             nonce_obj,
@@ -517,14 +508,13 @@ fn entry_decrypts_under_key(entry: &Value, key: &[u8; 32]) -> bool {
     let (Some(ct), Some(n), Some(os)) = (ciphertext, nonce, orig_size) else {
         return false;
     };
-    if n.len() != LARGE_BLOB_NONCE_LEN {
+    let Ok(nonce_obj) = <&Nonce<_>>::try_from(n) else {
         return false;
-    }
+    };
     let mut ad = Vec::with_capacity(LARGE_BLOB_AD_PREFIX.len() + 8);
     ad.extend_from_slice(LARGE_BLOB_AD_PREFIX);
     ad.extend_from_slice(&os.to_le_bytes());
     let cipher = Aes256Gcm::new(Key::<Aes256Gcm>::from_slice(key));
-    let nonce_obj = Nonce::from_slice(n);
     cipher
         .decrypt(nonce_obj, aes_gcm::aead::Payload { msg: ct, aad: &ad })
         .is_ok()
@@ -1672,9 +1662,9 @@ mod tests {
         let mut aad_a = Vec::new();
         aad_a.extend_from_slice(b"blob");
         aad_a.extend_from_slice(&over.to_le_bytes());
-        let ct_a = Aes256Gcm::new(Key::<Aes256Gcm>::from_slice(&key))
+        let ct_a = Aes256Gcm::new((&key).into())
             .encrypt(
-                Nonce::from_slice(&nonce_a),
+                (&nonce_a).into(),
                 aes_gcm::aead::Payload {
                     msg: &compressed_a,
                     aad: &aad_a,
@@ -1683,7 +1673,7 @@ mod tests {
             .unwrap();
         let oversize = LargeBlobMapEntry {
             ciphertext: ct_a,
-            nonce: nonce_a.to_vec(),
+            nonce: nonce_a,
             orig_size: over,
         };
         assert!(oversize
@@ -1705,7 +1695,7 @@ mod tests {
         let cipher = Aes256Gcm::new(Key::<Aes256Gcm>::from_slice(&key));
         let ciphertext = cipher
             .encrypt(
-                Nonce::from_slice(&nonce),
+                (&nonce).into(),
                 aes_gcm::aead::Payload {
                     msg: &compressed,
                     aad: &aad,
@@ -1715,7 +1705,7 @@ mod tests {
 
         let bomb = LargeBlobMapEntry {
             ciphertext,
-            nonce: nonce.to_vec(),
+            nonce,
             orig_size: 4,
         };
         let err = bomb.try_decrypt::<Infallible>(&key).unwrap_err();
@@ -1777,7 +1767,7 @@ mod tests {
         let cipher = Aes256Gcm::new(Key::<Aes256Gcm>::from_slice(&key));
         let compressed = cipher
             .decrypt(
-                Nonce::from_slice(&entry_nonce),
+                (&nonce).into(),
                 aes_gcm::aead::Payload {
                     msg: &ciphertext,
                     aad: &ad,
@@ -1934,11 +1924,11 @@ mod tests {
             }
         }
 
-        fn entry_nonce(serialized: &[u8]) -> Vec<u8> {
+        fn entry_nonce(serialized: &[u8]) -> [u8; LARGE_BLOB_NONCE_LEN] {
             let array_bytes = strip_array_trailer::<Infallible>(serialized).expect("trailer");
             let parsed = parse_large_blob_array::<Infallible>(array_bytes).expect("parse");
             assert_eq!(parsed.len(), 1, "exactly one entry per write");
-            parsed[0].nonce.clone()
+            parsed[0].nonce
         }
 
         let key = [0x5Au8; 32];
