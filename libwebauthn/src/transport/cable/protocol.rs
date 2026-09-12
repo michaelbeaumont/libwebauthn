@@ -701,7 +701,6 @@ mod tests {
 
     use async_trait::async_trait;
     use p256::elliptic_curve::sec1::ToEncodedPoint;
-    use rand::rngs::OsRng;
 
     #[derive(Debug, Default)]
     struct RecordingStore {
@@ -740,8 +739,8 @@ mod tests {
 
     #[tokio::test]
     async fn invalid_signature_does_not_evict() {
-        let client_private_key = NonZeroScalar::random(&mut OsRng);
-        let authenticator_secret = SecretKey::random(&mut OsRng);
+        let client_private_key = NonZeroScalar::generate_from_rng(&mut rand::rng());
+        let authenticator_secret = SecretKey::generate_from_rng(&mut rand::rng());
         let authenticator_public_key = authenticator_secret
             .public_key()
             .to_encoded_point(false)

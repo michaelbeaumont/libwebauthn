@@ -19,7 +19,7 @@ use libwebauthn::{
     },
 };
 use libwebauthn_tests::virt::get_virtual_device;
-use rand::{thread_rng, Rng};
+use rand::{rng, RngExt};
 use test_log::test;
 use tokio::sync::broadcast::error::TryRecvError;
 use tokio::sync::broadcast::Receiver;
@@ -87,8 +87,8 @@ async fn test_webauthn_prf_eval_at_create_degrades_when_unsupported() {
         ],
     ));
 
-    let user_id: [u8; 32] = thread_rng().gen();
-    let challenge: [u8; 32] = thread_rng().gen();
+    let user_id: [u8; 32] = rng().random();
+    let challenge: [u8; 32] = rng().random();
     let extensions = MakeCredentialsRequestExtensions {
         prf: Some(MakeCredentialPrfInput {
             eval: Some(PrfInputValue {
@@ -166,8 +166,8 @@ async fn handle_updates(
 }
 
 async fn run_test_battery(channel: &mut HidChannel<'_>, using_pin: bool) {
-    let user_id: [u8; 32] = thread_rng().gen();
-    let challenge: [u8; 32] = thread_rng().gen();
+    let user_id: [u8; 32] = rng().random();
+    let challenge: [u8; 32] = rng().random();
 
     let extensions = MakeCredentialsRequestExtensions {
         prf: Some(MakeCredentialPrfInput { eval: None }),
@@ -674,8 +674,8 @@ async fn test_webauthn_prf_variable_length_input() {
     let mut device = get_virtual_device();
     let mut channel = device.channel(ChannelSettings::default()).await.unwrap();
 
-    let user_id: [u8; 32] = thread_rng().gen();
-    let challenge: [u8; 32] = thread_rng().gen();
+    let user_id: [u8; 32] = rng().random();
+    let challenge: [u8; 32] = rng().random();
 
     let make_credentials_request = MakeCredentialRequest {
         hints: vec![],
@@ -839,8 +839,8 @@ async fn test_webauthn_prf_upgrades_uv_at_registration() {
         vec![UvUpdateShim::PinRequired, UvUpdateShim::PresenceRequired],
     ));
 
-    let user_id: [u8; 32] = thread_rng().gen();
-    let challenge: [u8; 32] = thread_rng().gen();
+    let user_id: [u8; 32] = rng().random();
+    let challenge: [u8; 32] = rng().random();
     let request = basic_make_credential_request(
         &user_id,
         &challenge,
@@ -881,8 +881,8 @@ async fn test_webauthn_no_prf_no_upgrade() {
         vec![UvUpdateShim::PresenceRequired],
     ));
 
-    let user_id: [u8; 32] = thread_rng().gen();
-    let challenge: [u8; 32] = thread_rng().gen();
+    let user_id: [u8; 32] = rng().random();
+    let challenge: [u8; 32] = rng().random();
     let request = basic_make_credential_request(
         &user_id,
         &challenge,
@@ -909,8 +909,8 @@ async fn test_webauthn_prf_upgrades_uv_at_assertion() {
     let mut channel = device.channel(ChannelSettings::default()).await.unwrap();
     channel.change_pin("1234".into(), TIMEOUT).await.unwrap();
 
-    let user_id: [u8; 32] = thread_rng().gen();
-    let challenge: [u8; 32] = thread_rng().gen();
+    let user_id: [u8; 32] = rng().random();
+    let challenge: [u8; 32] = rng().random();
 
     let registration = basic_make_credential_request(
         &user_id,

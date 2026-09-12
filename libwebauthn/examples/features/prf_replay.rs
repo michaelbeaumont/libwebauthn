@@ -3,7 +3,7 @@ use std::error::Error;
 use std::time::Duration;
 
 use libwebauthn::transport::hid::channel::HidChannel;
-use rand::{thread_rng, Rng};
+use rand::{rng, RngExt};
 use serde_bytes::ByteBuf;
 
 use libwebauthn::ops::webauthn::{
@@ -47,7 +47,7 @@ pub async fn main() -> Result<(), Box<dyn Error>> {
     let devices = list_devices().await.unwrap();
     println!("Devices found: {:?}", devices);
 
-    let challenge: [u8; 32] = thread_rng().gen();
+    let challenge: [u8; 32] = rng().random();
 
     for mut device in devices {
         println!("Selected HID authenticator: {}", device);

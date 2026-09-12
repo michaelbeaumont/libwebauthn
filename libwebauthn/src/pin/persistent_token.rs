@@ -6,8 +6,7 @@ use aes::cipher::{block_padding::NoPadding, BlockDecryptMut};
 use async_trait::async_trait;
 use cbc::cipher::KeyIvInit;
 use hkdf::Hkdf;
-use rand::rngs::OsRng;
-use rand::RngCore;
+use rand::Rng;
 use sha2::Sha256;
 use tokio::sync::Mutex;
 use tracing::{debug, error, trace, warn};
@@ -190,7 +189,7 @@ pub(crate) async fn recognize_authenticator(
 /// from the device, so a record survives device-identifier changes only via reaping.
 fn new_record_id() -> PersistentTokenRecordId {
     let mut bytes = [0u8; 16];
-    OsRng.fill_bytes(&mut bytes);
+    rand::rng().fill_bytes(&mut bytes);
     hex::encode(bytes)
 }
 

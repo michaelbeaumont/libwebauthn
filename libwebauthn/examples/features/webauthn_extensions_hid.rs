@@ -2,7 +2,7 @@ use std::convert::TryInto;
 use std::error::Error;
 use std::time::Duration;
 
-use rand::{thread_rng, Rng};
+use rand::{rng, RngExt};
 
 use libwebauthn::ops::webauthn::{
     CredentialProtectionExtension, CredentialProtectionPolicy, GetAssertionRequest,
@@ -29,8 +29,8 @@ pub async fn main() -> Result<(), Box<dyn Error>> {
     let devices = list_devices().await.unwrap();
     println!("Devices found: {:?}", devices);
 
-    let user_id: [u8; 32] = thread_rng().gen();
-    let challenge: [u8; 32] = thread_rng().gen();
+    let user_id: [u8; 32] = rng().random();
+    let challenge: [u8; 32] = rng().random();
 
     let extensions = MakeCredentialsRequestExtensions {
         cred_protect: Some(CredentialProtectionExtension {

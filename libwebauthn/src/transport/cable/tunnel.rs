@@ -188,7 +188,6 @@ mod tests {
     use super::*;
     use crate::transport::cable::known_devices::{ClientPayload, ClientPayloadHint};
     use p256::NonZeroScalar;
-    use rand::rngs::OsRng;
     use serde_bytes::ByteBuf;
 
     fn known_device_connection_type(public_key: Vec<u8>) -> CableTunnelConnectionType {
@@ -207,7 +206,7 @@ mod tests {
         CableTunnelConnectionType::QrCode {
             routing_id: "aabbcc".to_string(),
             tunnel_id: "00112233445566778899aabbccddeeff".to_string(),
-            private_key: NonZeroScalar::random(&mut OsRng),
+            private_key: NonZeroScalar::generate_from_rng(&mut rand::rng()),
         }
     }
 

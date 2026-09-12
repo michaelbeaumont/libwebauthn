@@ -1,7 +1,7 @@
 use std::error::Error;
 use std::time::Duration;
 
-use rand::{thread_rng, Rng};
+use rand::{rng, RngExt};
 use serde_bytes::ByteBuf;
 
 use libwebauthn::ops::webauthn::{
@@ -31,7 +31,7 @@ pub async fn main() -> Result<(), Box<dyn Error>> {
     let devices = list_devices().await.unwrap();
     println!("Devices found: {:?}", devices);
 
-    let user_id: [u8; 32] = thread_rng().gen();
+    let user_id: [u8; 32] = rng().random();
 
     for mut device in devices {
         println!("Selected HID authenticator: {}", device);
@@ -108,7 +108,7 @@ async fn make_credential_call<C: Channel>(
     user_id: &[u8],
     exclude_list: Option<Vec<Ctap2PublicKeyCredentialDescriptor>>,
 ) -> Result<Ctap2PublicKeyCredentialDescriptor, WebAuthnError<C::TransportError>> {
-    let challenge: [u8; 32] = thread_rng().gen();
+    let challenge: [u8; 32] = rng().random();
     let make_credentials_request = MakeCredentialRequest {
         hints: vec![],
         authenticator_attachment: None,
@@ -134,7 +134,7 @@ async fn get_assertion_call<C: Channel>(
     channel: &mut C,
     allow_list: Vec<Ctap2PublicKeyCredentialDescriptor>,
 ) -> Result<GetAssertionResponse, WebAuthnError<C::TransportError>> {
-    let challenge: [u8; 32] = thread_rng().gen();
+    let challenge: [u8; 32] = rng().random();
     let get_assertion = GetAssertionRequest {
         hints: vec![],
         relying_party_id: "example.org".to_owned(),

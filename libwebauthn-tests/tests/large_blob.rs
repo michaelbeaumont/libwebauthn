@@ -16,7 +16,7 @@ use libwebauthn::transport::{Channel, ChannelSettings, Device};
 use libwebauthn::webauthn::{PlatformError, WebAuthn, WebAuthnError};
 use libwebauthn::UvUpdate;
 use libwebauthn_tests::virt::get_virtual_device;
-use rand::{thread_rng, Rng};
+use rand::{rng, RngExt};
 use test_log::test;
 use tokio::sync::broadcast::Receiver;
 
@@ -42,8 +42,8 @@ async fn test_webauthn_large_blob_read_returns_planted_blob() {
     let mut device = get_virtual_device();
     let mut channel = device.channel(ChannelSettings::default()).await.unwrap();
 
-    let user_id: [u8; 32] = thread_rng().gen();
-    let challenge: [u8; 32] = thread_rng().gen();
+    let user_id: [u8; 32] = rng().random();
+    let challenge: [u8; 32] = rng().random();
 
     let make = MakeCredentialRequest {
         hints: vec![],
@@ -88,7 +88,7 @@ async fn test_webauthn_large_blob_read_returns_planted_blob() {
 
     let key = capture_large_blob_key(&mut channel, &credential, &challenge).await;
     let plaintext = b"hello, planted largeBlob".to_vec();
-    let nonce: [u8; 12] = thread_rng().gen();
+    let nonce: [u8; 12] = rng().random();
     let serialized = encode_serialized_array(&[encode_entry(&key, &nonce, &plaintext)]);
     plant_large_blob_array(&mut channel, serialized).await;
 
@@ -241,7 +241,7 @@ async fn register_with_large_blob(
     user_handle: &str,
     challenge: &[u8; 32],
 ) -> Ctap2PublicKeyCredentialDescriptor {
-    let user_id: [u8; 32] = thread_rng().gen();
+    let user_id: [u8; 32] = rng().random();
     let make = MakeCredentialRequest {
         hints: vec![],
         authenticator_attachment: None,
@@ -311,7 +311,7 @@ fn ga_request(
 async fn test_webauthn_large_blob_write_then_read_returns_blob() {
     let mut device = get_virtual_device();
     let mut channel = device.channel(ChannelSettings::default()).await.unwrap();
-    let challenge: [u8; 32] = thread_rng().gen();
+    let challenge: [u8; 32] = rng().random();
 
     let state_recv = channel.get_ux_update_receiver();
     // MakeCredential + GetAssertion(write) + GetAssertion(read) = 3 PresenceRequired updates.
@@ -360,7 +360,7 @@ async fn test_webauthn_large_blob_write_then_read_returns_blob() {
 async fn test_webauthn_large_blob_write_replaces_existing_entry() {
     let mut device = get_virtual_device();
     let mut channel = device.channel(ChannelSettings::default()).await.unwrap();
-    let challenge: [u8; 32] = thread_rng().gen();
+    let challenge: [u8; 32] = rng().random();
 
     let state_recv = channel.get_ux_update_receiver();
     let update_handle = tokio::spawn(handle_updates_n(state_recv, 4));
@@ -413,7 +413,7 @@ async fn test_webauthn_large_blob_write_replaces_existing_entry() {
 async fn test_webauthn_large_blob_delete_without_existing_entry_reports_false() {
     let mut device = get_virtual_device();
     let mut channel = device.channel(ChannelSettings::default()).await.unwrap();
-    let challenge: [u8; 32] = thread_rng().gen();
+    let challenge: [u8; 32] = rng().random();
 
     let state_recv = channel.get_ux_update_receiver();
     let update_handle = tokio::spawn(handle_updates_n(state_recv, 2));
@@ -446,7 +446,7 @@ async fn test_webauthn_large_blob_delete_without_existing_entry_reports_false() 
 async fn test_webauthn_large_blob_delete_removes_entry() {
     let mut device = get_virtual_device();
     let mut channel = device.channel(ChannelSettings::default()).await.unwrap();
-    let challenge: [u8; 32] = thread_rng().gen();
+    let challenge: [u8; 32] = rng().random();
 
     let state_recv = channel.get_ux_update_receiver();
     let update_handle = tokio::spawn(handle_updates_n(state_recv, 4));
@@ -550,7 +550,7 @@ async fn read_large_blob(
 async fn test_webauthn_large_blob_foreign_entry_survives_write_and_delete() {
     let mut device = get_virtual_device();
     let mut channel = device.channel(ChannelSettings::default()).await.unwrap();
-    let challenge: [u8; 32] = thread_rng().gen();
+    let challenge: [u8; 32] = rng().random();
 
     let state_recv = channel.get_ux_update_receiver();
     // 2 registrations + 3 writes + 4 reads + 1 delete = 10 ceremonies.
@@ -625,7 +625,7 @@ async fn test_webauthn_large_blob_foreign_entry_survives_write_and_delete() {
 async fn test_webauthn_large_blob_write_requires_single_allow_credential() {
     let mut device = get_virtual_device();
     let mut channel = device.channel(ChannelSettings::default()).await.unwrap();
-    let challenge: [u8; 32] = thread_rng().gen();
+    let challenge: [u8; 32] = rng().random();
 
     let state_recv = channel.get_ux_update_receiver();
     // Two registrations, one PresenceRequired each. The rejected writes emit none.
@@ -674,7 +674,7 @@ async fn test_webauthn_large_blob_write_requires_single_allow_credential() {
 async fn test_webauthn_large_blob_write_replaces_with_smaller_blob() {
     let mut device = get_virtual_device();
     let mut channel = device.channel(ChannelSettings::default()).await.unwrap();
-    let challenge: [u8; 32] = thread_rng().gen();
+    let challenge: [u8; 32] = rng().random();
 
     let state_recv = channel.get_ux_update_receiver();
     // MakeCredential + write(large) + read + write(small) + read = 5 PresenceRequired updates.

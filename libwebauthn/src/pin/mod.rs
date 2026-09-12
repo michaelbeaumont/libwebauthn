@@ -26,7 +26,7 @@ use p256::{
     ecdh::EphemeralSecret, elliptic_curve::sec1::FromEncodedPoint, EncodedPoint,
     PublicKey as P256PublicKey,
 };
-use rand::{rngs::OsRng, thread_rng, Rng, SeedableRng};
+use rand::{rng, RngExt, SeedableRng};
 use sha2::{Digest, Sha256};
 use tracing::{error, instrument, warn};
 use x509_parser::nom::AsBytes;
@@ -140,9 +140,9 @@ impl PinUvAuthProtocolOne {
             // For testing only!!
             // We need a deterministic, seedable RNG to be able to "predict" crypto-operations
             let mut rng = rand::rngs::StdRng::seed_from_u64(42);
-            EphemeralSecret::random(&mut rng)
+            EphemeralSecret::generate_from_rng(&mut rng)
         } else {
-            EphemeralSecret::random(&mut OsRng)
+            EphemeralSecret::generate_from_rng(&mut rng())
         };
         let public_key = private_key.public_key();
         Self {
@@ -337,9 +337,9 @@ impl PinUvAuthProtocolTwo {
             // For testing only!!
             // We need a deterministic, seedable RNG to be able to "predict" crypto-operations
             let mut rng = rand::rngs::StdRng::seed_from_u64(42);
-            EphemeralSecret::random(&mut rng)
+            EphemeralSecret::generate_from_rng(&mut rng)
         } else {
-            EphemeralSecret::random(&mut OsRng)
+            EphemeralSecret::generate_from_rng(&mut rng())
         };
         let public_key = private_key.public_key();
         Self {
@@ -394,7 +394,7 @@ impl PinUvAuthProtocol for PinUvAuthProtocolTwo {
         })?;
 
         // Let iv be a 16-byte, random bytestring.
-        let iv: [u8; 16] = thread_rng().gen();
+        let iv: [u8; 16] = rng().random();
 
         // Let ct be the AES-256-CBC encryption of demPlaintext using key and iv.
         // (No padding is performed as the size of demPlaintext is required to be a multiple of the AES block length.)

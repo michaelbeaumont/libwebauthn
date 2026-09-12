@@ -5,8 +5,7 @@ use std::time::SystemTime;
 use async_trait::async_trait;
 use p256::elliptic_curve::sec1::ToEncodedPoint;
 use p256::{NonZeroScalar, SecretKey};
-use rand::rngs::OsRng;
-use rand::RngCore;
+use rand::Rng;
 use serde::Serialize;
 use serde_bytes::ByteArray;
 use serde_indexed::SerializeIndexed;
@@ -163,7 +162,7 @@ impl CableQrCodeDevice {
         store: Option<Arc<dyn CableKnownDeviceInfoStore>>,
         transports: CableTransports,
     ) -> Result<Self, CableError> {
-        let private_key_scalar = NonZeroScalar::random(&mut OsRng);
+        let private_key_scalar = NonZeroScalar::generate_from_rng(&mut rand::rng());
         let private_key = SecretKey::from(private_key_scalar);
         let public_key: [u8; 33] = private_key
             .public_key()
@@ -173,7 +172,7 @@ impl CableQrCodeDevice {
             .try_into()
             .map_err(|_| CableError::InvalidKey)?;
         let mut qr_secret = [0u8; 16];
-        OsRng.fill_bytes(&mut qr_secret);
+        rand::rng().fill_bytes(&mut qr_secret);
 
         let current_unix_time = SystemTime::now()
             .duration_since(SystemTime::UNIX_EPOCH)

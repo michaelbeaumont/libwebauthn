@@ -12,7 +12,7 @@ use libwebauthn::{
     },
 };
 use libwebauthn_tests::virt::get_virtual_device;
-use rand::{thread_rng, Rng};
+use rand::{rng, RngExt};
 use test_log::test;
 use tokio::sync::broadcast::Receiver;
 
@@ -29,8 +29,8 @@ async fn handle_updates(mut state_recv: Receiver<UvUpdate>) {
 async fn test_webauthn_basic_ctap2() {
     let mut device = get_virtual_device();
 
-    let user_id: [u8; 32] = thread_rng().gen();
-    let challenge: [u8; 32] = thread_rng().gen();
+    let user_id: [u8; 32] = rng().random();
+    let challenge: [u8; 32] = rng().random();
 
     println!("Selected HID authenticator: {}", device);
     let mut channel = device.channel(ChannelSettings::default()).await.unwrap();

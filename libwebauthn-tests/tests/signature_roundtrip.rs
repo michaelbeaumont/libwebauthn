@@ -15,7 +15,7 @@ use libwebauthn::webauthn::WebAuthn;
 use libwebauthn_tests::virt::get_virtual_device;
 use p256::ecdsa::signature::Verifier;
 use p256::ecdsa::{Signature, VerifyingKey};
-use rand::{thread_rng, Rng};
+use rand::{rng, RngExt};
 use sha2::{Digest, Sha256};
 use test_log::test;
 use x509_parser::prelude::{FromDer, SubjectPublicKeyInfo, X509Certificate};
@@ -63,8 +63,8 @@ async fn test_ctap2_signature_roundtrip() {
         "virtual authenticator must advertise hmac-secret"
     );
 
-    let user_id: [u8; 32] = thread_rng().gen();
-    let challenge: [u8; 32] = thread_rng().gen();
+    let user_id: [u8; 32] = rng().random();
+    let challenge: [u8; 32] = rng().random();
 
     let make_request = MakeCredentialRequest {
         hints: vec![],

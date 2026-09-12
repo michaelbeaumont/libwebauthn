@@ -8,7 +8,7 @@ use std::time::{Duration, Instant};
 use async_trait::async_trait;
 use byteorder::{BigEndian, ReadBytesExt};
 use hidapi::HidDevice as HidApiDevice;
-use rand::{thread_rng, Rng};
+use rand::{rng, RngExt};
 use tokio::sync::broadcast;
 use tokio::sync::mpsc::error::TryRecvError;
 use tokio::sync::mpsc::{self, Receiver, Sender};
@@ -191,7 +191,7 @@ impl<'d> HidChannel<'d> {
 
     #[instrument(level = Level::DEBUG, skip_all)]
     async fn init(&mut self, timeout: Duration) -> Result<InitResponse, HidError> {
-        let nonce: [u8; 8] = thread_rng().gen();
+        let nonce: [u8; 8] = rng().random();
         let request = HidMessage::broadcast(HidCommand::Init, &nonce);
 
         self.hid_send(&request).await?;

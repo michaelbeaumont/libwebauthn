@@ -26,14 +26,11 @@ use ctaphid::{
 use ctaphid_dispatch::{Channel, Dispatch, Requester, DEFAULT_MESSAGE_SIZE};
 use fido_authenticator::{Authenticator, Config, Conforming};
 use littlefs2::{object_safe::DynFilesystem, path, path::PathBuf};
-use rand::{
-    distributions::{Distribution, Uniform},
-    RngCore as _,
-};
+use rand::distr::{Distribution, Uniform};
 use tracing::info;
 use trussed::{
     backend::BackendId,
-    platform::Platform as _,
+    platform::{Platform as _, RngCore as _},
     store::Store as _,
     virt::{self, StoreConfig},
 };
@@ -205,7 +202,7 @@ where
         // virt always uses the same seed -- request some random bytes to reach a somewhat random
         // state
         let uniform = Uniform::from(0..64);
-        let n = uniform.sample(&mut rand::thread_rng());
+        let n = uniform.sample(&mut rand::rng());
         for _ in 0..n {
             platform.rng().next_u32();
         }

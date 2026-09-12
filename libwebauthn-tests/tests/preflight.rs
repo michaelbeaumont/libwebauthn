@@ -16,7 +16,7 @@ use libwebauthn::transport::{Channel, ChannelSettings, Device};
 use libwebauthn::webauthn::{WebAuthn, WebAuthnError};
 use libwebauthn::UvUpdate;
 use libwebauthn_tests::virt::get_virtual_device;
-use rand::{thread_rng, Rng};
+use rand::{rng, RngExt};
 use serde_bytes::ByteBuf;
 use test_log::test;
 use tokio::sync::broadcast::Receiver;
@@ -47,7 +47,7 @@ async fn make_credential_call_with_rp(
     exclude_list: Option<Vec<Ctap2PublicKeyCredentialDescriptor>>,
     rp_id: &str,
 ) -> Result<(Ctap2PublicKeyCredentialDescriptor, [u8; 32]), WebAuthnError<HidError>> {
-    let challenge: [u8; 32] = thread_rng().gen();
+    let challenge: [u8; 32] = rng().random();
     let make_credentials_request = MakeCredentialRequest {
         hints: vec![],
         authenticator_attachment: None,
@@ -75,7 +75,7 @@ async fn get_assertion_call(
     channel: &mut HidChannel<'_>,
     allow_list: Vec<Ctap2PublicKeyCredentialDescriptor>,
 ) -> Result<GetAssertionResponse, WebAuthnError<HidError>> {
-    let challenge: [u8; 32] = thread_rng().gen();
+    let challenge: [u8; 32] = rng().random();
     let get_assertion = GetAssertionRequest {
         hints: vec![],
         origin: "example.org".to_owned(),
@@ -105,10 +105,10 @@ async fn preflight_no_exclude_list() {
     let mut device = get_virtual_device();
     let mut channel = device.channel(ChannelSettings::default()).await.unwrap();
 
-    let user_id: [u8; 32] = thread_rng().gen();
+    let user_id: [u8; 32] = rng().random();
 
     let state_recv = channel.get_ux_update_receiver();
-    let hash: [u8; 32] = thread_rng().gen();
+    let hash: [u8; 32] = rng().random();
     let filtered_list = ctap2_preflight(&mut channel, &[], &hash, "example.org")
         .await
         .expect("preflight failed");
@@ -128,7 +128,7 @@ async fn preflight_nonsense_exclude_list() {
     let mut device = get_virtual_device();
     let mut channel = device.channel(ChannelSettings::default()).await.unwrap();
 
-    let user_id: [u8; 32] = thread_rng().gen();
+    let user_id: [u8; 32] = rng().random();
 
     let state_recv = channel.get_ux_update_receiver();
 
@@ -138,7 +138,7 @@ async fn preflight_nonsense_exclude_list() {
         create_credential(&[7, 6, 5, 4, 3, 2, 1, 9, 8]),
     ];
 
-    let hash: [u8; 32] = thread_rng().gen();
+    let hash: [u8; 32] = rng().random();
     let filtered_list = ctap2_preflight(&mut channel, &exclude_list, &hash, "example.org")
         .await
         .expect("preflight failed");
@@ -158,7 +158,7 @@ async fn preflight_mixed_exclude_list() {
     let mut device = get_virtual_device();
     let mut channel = device.channel(ChannelSettings::default()).await.unwrap();
 
-    let user_id: [u8; 32] = thread_rng().gen();
+    let user_id: [u8; 32] = rng().random();
 
     let state_recv = channel.get_ux_update_receiver();
 
@@ -207,7 +207,7 @@ async fn preflight_no_allow_list() {
     let mut device = get_virtual_device();
     let mut channel = device.channel(ChannelSettings::default()).await.unwrap();
 
-    let user_id: [u8; 32] = thread_rng().gen();
+    let user_id: [u8; 32] = rng().random();
 
     let state_recv = channel.get_ux_update_receiver();
     let res = make_credential_call(&mut channel, &user_id, None).await;
@@ -239,7 +239,7 @@ async fn preflight_nonsense_allow_list() {
     let mut device = get_virtual_device();
     let mut channel = device.channel(ChannelSettings::default()).await.unwrap();
 
-    let user_id: [u8; 32] = thread_rng().gen();
+    let user_id: [u8; 32] = rng().random();
 
     let state_recv = channel.get_ux_update_receiver();
     let res = make_credential_call(&mut channel, &user_id, None).await;
@@ -278,7 +278,7 @@ async fn preflight_with_appid_exclude_finds_legacy_credential() {
     let mut device = get_virtual_device();
     let mut channel = device.channel(ChannelSettings::default()).await.unwrap();
 
-    let user_id: [u8; 32] = thread_rng().gen();
+    let user_id: [u8; 32] = rng().random();
     let _state_recv = channel.get_ux_update_receiver();
 
     // First, register the legacy credential.
@@ -289,7 +289,7 @@ async fn preflight_with_appid_exclude_finds_legacy_credential() {
 
     // Preflight under "example.org" without appid_exclude: legacy
     // credential is not detected.
-    let hash: [u8; 32] = thread_rng().gen();
+    let hash: [u8; 32] = rng().random();
     let filtered_no_appid = ctap2_preflight_with_appid(
         &mut channel,
         std::slice::from_ref(&legacy_credential),
@@ -330,7 +330,7 @@ async fn preflight_mixed_allow_list() {
     let mut device = get_virtual_device();
     let mut channel = device.channel(ChannelSettings::default()).await.unwrap();
 
-    let user_id: [u8; 32] = thread_rng().gen();
+    let user_id: [u8; 32] = rng().random();
 
     let state_recv = channel.get_ux_update_receiver();
     let (first_credential, _) = make_credential_call(&mut channel, &user_id, None)

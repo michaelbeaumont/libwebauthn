@@ -663,8 +663,8 @@ pub(crate) async fn write_authenticator_large_blob<C: Ctap2 + ?Sized>(
     }
     let existing = fetch_or_initial(channel, max_fragment, timeout).await?;
     let mut nonce = [0u8; LARGE_BLOB_NONCE_LEN];
-    use rand::RngCore;
-    rand::thread_rng().fill_bytes(&mut nonce);
+    use rand::Rng;
+    rand::rng().fill_bytes(&mut nonce);
     let entry_bytes = encrypt_entry(large_blob_key, &nonce, blob)?;
     let serialized = rebuild_serialized_array(&existing, large_blob_key, Some(entry_bytes))?;
     upload_serialized_array(channel, &serialized, max_fragment, pin_uv_auth, timeout).await
