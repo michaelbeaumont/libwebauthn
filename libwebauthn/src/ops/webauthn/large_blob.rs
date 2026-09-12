@@ -1219,7 +1219,7 @@ mod tests {
         expected_msg.extend_from_slice(&[0x0c, 0x00]);
         expected_msg.extend_from_slice(&offset.to_le_bytes());
         expected_msg.extend_from_slice(&Sha256::digest(chunk));
-        let mut mac = <hmac::Hmac<Sha256> as hmac::Mac>::new_from_slice(&token).unwrap();
+        let mut mac = <hmac::Hmac<Sha256> as hmac::KeyInit>::new_from_slice(&token).unwrap();
         mac.update(&expected_msg);
         let expected = mac.finalize().into_bytes();
 
@@ -1982,7 +1982,7 @@ mod tests {
         expected_msg.extend_from_slice(&[0x0c, 0x00]);
         expected_msg.extend_from_slice(&offset.to_le_bytes());
         expected_msg.extend_from_slice(&Sha256::digest(chunk));
-        let mut mac = <hmac::Hmac<Sha256> as hmac::Mac>::new_from_slice(&token).unwrap();
+        let mut mac = <hmac::Hmac<Sha256> as hmac::KeyInit>::new_from_slice(&token).unwrap();
         mac.update(&expected_msg);
         let full = mac.finalize().into_bytes();
 

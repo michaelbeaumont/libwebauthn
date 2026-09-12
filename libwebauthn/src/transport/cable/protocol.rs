@@ -3,7 +3,7 @@
 use std::collections::BTreeMap;
 use std::sync::Arc;
 
-use hmac::{Hmac, Mac};
+use hmac::{Hmac, KeyInit as _, Mac};
 use p256::{ecdh, NonZeroScalar};
 use p256::{PublicKey, SecretKey};
 use serde::Deserialize;

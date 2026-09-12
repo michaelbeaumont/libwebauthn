@@ -20,7 +20,7 @@ use async_trait::async_trait;
 use cbc::cipher::{BlockEncryptMut, KeyIvInit};
 use cosey as cose;
 use hkdf::Hkdf;
-use hmac::Mac;
+use hmac::{KeyInit as _, Mac};
 use icu_normalizer::ComposingNormalizerBorrowed;
 use p256::{
     ecdh::EphemeralSecret, elliptic_curve::sec1::FromSec1Point, elliptic_curve::Generate,
