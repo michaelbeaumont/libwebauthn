@@ -1,5 +1,6 @@
 use serde::Serialize;
 use serde_cbor_2 as serde_cbor;
+use std::collections::BTreeMap;
 
 #[derive(thiserror::Error, Debug)]
 pub enum CborError {
@@ -18,6 +19,31 @@ impl PartialEq for CborError {
 }
 
 pub(crate) type Value = serde_cbor::Value;
+
+/// Serializes `typed` as a single definite-length CBOR map in CTAP2 canonical key
+/// order, with the entries of `other` merged in. Entries of `typed` win on a clash.
+/// With no `other` entries, `typed` is serialized unchanged.
+pub(crate) fn serialize_merged<T, S>(
+    typed: &T,
+    other: impl ExactSizeIterator<Item = (Value, Value)>,
+    serializer: S,
+) -> Result<S::Ok, S::Error>
+where
+    T: Serialize,
+    S: serde::Serializer,
+{
+    use serde::ser::Error;
+
+    if other.len() == 0 {
+        return typed.serialize(serializer);
+    }
+    let Value::Map(typed) = serde_cbor::value::to_value(typed).map_err(S::Error::custom)? else {
+        return Err(S::Error::custom("expected a map"));
+    };
+    let mut merged: BTreeMap<Value, Value> = other.collect();
+    merged.extend(typed);
+    merged.serialize(serializer)
+}
 
 pub(crate) fn to_vec<T>(serializable: &T) -> Result<Vec<u8>, CborError>
 where

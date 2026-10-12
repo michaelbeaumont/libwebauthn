@@ -235,6 +235,9 @@ impl MakeCredentialResponse {
             });
         }
 
+        // Unsigned extension outputs (makeCredential 0x06)
+        results.extend_untyped(&unsigned_ext.unsigned_extension_outputs);
+
         results
     }
 }
@@ -256,6 +259,13 @@ pub struct MakeCredentialsResponseUnsignedExtensions {
     pub large_blob: Option<MakeCredentialLargeBlobExtensionOutput>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub prf: Option<MakeCredentialPrfOutput>,
+
+    /// Outputs of extensions the authenticator returns unsigned (makeCredential
+    /// response member 0x06), keyed by extension identifier and already
+    /// converted to JSON-safe values. Surfaced verbatim as top-level members of
+    /// the client extension results.
+    #[serde(flatten)]
+    pub unsigned_extension_outputs: serde_json::Map<String, serde_json::Value>,
 }
 
 impl MakeCredentialsResponseUnsignedExtensions {
@@ -264,6 +274,7 @@ impl MakeCredentialsResponseUnsignedExtensions {
             || self.hmac_create_secret.is_some()
             || self.large_blob.is_some()
             || self.prf.is_some()
+            || !self.unsigned_extension_outputs.is_empty()
     }
 
     pub fn from_signed_extensions(
@@ -387,12 +398,17 @@ impl MakeCredentialsResponseUnsignedExtensions {
             .filter(|_| exclude_present)
             .map(|_| true);
 
+        let unsigned_extension_outputs = unsigned_outputs
+            .map(cbor::map_to_json_object)
+            .unwrap_or_default();
+
         MakeCredentialsResponseUnsignedExtensions {
             appid_exclude,
             cred_props,
             hmac_create_secret,
             large_blob,
             prf,
+            unsigned_extension_outputs,
         }
     }
 }
@@ -696,6 +712,10 @@ pub struct MakeCredentialsRequestExtensions {
     /// `SHA-256(appidExclude)` so that legacy U2F-keyed credentials are
     /// detected and registration is prevented.
     pub appid_exclude: Option<String>,
+    /// Extensions without a typed field, keyed by identifier. Each is forwarded
+    /// to the authenticator as-is when its getInfo advertises the identifier.
+    #[serde(flatten)]
+    pub other: serde_json::Map<String, serde_json::Value>,
 }
 
 pub type MakeCredentialsResponseExtensions = Ctap2MakeCredentialsResponseExtensions;
@@ -2210,6 +2230,7 @@ mod tests {
                 enabled: Some(true),
                 results: None,
             }),
+            unsigned_extension_outputs: Default::default(),
         };
 
         let request = create_test_request();

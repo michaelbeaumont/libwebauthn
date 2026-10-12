@@ -57,6 +57,9 @@ pub struct GetAssertionRequestExtensionsJSON {
     /// existing U2F credentials registered under a legacy AppID, this URL is
     /// hashed in place of the rpId to derive the U2F application parameter.
     pub appid: Option<String>,
+    /// Extensions without a typed field, keyed by identifier.
+    #[serde(flatten)]
+    pub other: serde_json::Map<String, serde_json::Value>,
 }
 
 #[derive(Debug, Clone, Deserialize)]

@@ -231,6 +231,7 @@ impl FromIdlModel<PublicKeyCredentialRequestOptionsJSON> for GetAssertionRequest
                     large_blob: large_blob.clone(),
                     prf: prf.clone(),
                     appid: appid.clone(),
+                    other: extensions_opt.other.clone(),
                 });
 
         let timeout: Duration = inner
@@ -393,6 +394,9 @@ pub struct GetAssertionRequestExtensions {
     /// existing U2F credentials registered under a legacy AppID, this URL is
     /// hashed in place of the rpId to derive the U2F application parameter.
     pub appid: Option<String>,
+    /// Extensions without a typed field, keyed by identifier. Each is forwarded
+    /// to the authenticator as-is when its getInfo advertises the identifier.
+    pub other: serde_json::Map<String, serde_json::Value>,
 }
 
 #[derive(Clone, Debug, Default, Serialize)]
@@ -584,24 +588,8 @@ impl Assertion {
                 });
             }
 
-            // Unsigned extension outputs (getAssertion 0x08): surface each entry
-            // as a top-level member, skipping ids that collide with a typed
-            // member to avoid emitting a duplicate JSON key.
-            const TYPED_MEMBERS: [&str; 6] = [
-                "appid",
-                "credProps",
-                "hmacCreateSecret",
-                "hmacGetSecret",
-                "largeBlob",
-                "prf",
-            ];
-            for (id, value) in &unsigned_ext.unsigned_extension_outputs {
-                if !TYPED_MEMBERS.contains(&id.as_str()) {
-                    results
-                        .unsigned_extension_outputs
-                        .insert(id.clone(), value.clone());
-                }
-            }
+            // Unsigned extension outputs (getAssertion 0x08)
+            results.extend_untyped(&unsigned_ext.unsigned_extension_outputs);
         }
 
         results
@@ -1412,6 +1400,7 @@ mod tests {
             prf: None,
             large_blob: None,
             appid: Some("https://www.example.org/u2f/origins.json".to_string()),
+            other: Default::default(),
         });
 
         let sign_requests = req.try_downgrade().expect("downgrade ok");
