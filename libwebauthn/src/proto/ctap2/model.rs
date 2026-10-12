@@ -33,7 +33,7 @@ pub use client_pin::{
 mod make_credential;
 pub use make_credential::{
     Ctap2MakeCredentialOptions, Ctap2MakeCredentialRequest, Ctap2MakeCredentialResponse,
-    Ctap2MakeCredentialsResponseExtensions, Ctap2PrfMakeCredentialInput,
+    Ctap2MakeCredentialsRequestExtensions, Ctap2MakeCredentialsResponseExtensions, Ctap2PrfMakeCredentialInput,
 };
 mod get_assertion;
 pub(crate) use get_assertion::{parse_unsigned_prf, UnsignedPrfOutput};
