@@ -156,11 +156,12 @@ pub struct Ctap2GetInfoResponse {
     pub max_pin_length: Option<u32>,
 }
 
-/// CTAP 2.1/2.2 6.4: platforms assume 1024 bytes when maxMsgSize is absent.
-pub const DEFAULT_MAX_MSG_SIZE: usize = 1024;
+/// Assumed maxMsgSize when the device omits it. 10x the CTAP 2.1/2.2 6.4 default of 1024
+/// bytes, since hybrid authenticators often omit the field but accept larger messages.
+pub const DEFAULT_MAX_MSG_SIZE: usize = 10240;
 
 impl Ctap2GetInfoResponse {
-    /// maxMsgSize (0x05), defaulting to 1024 bytes when the device omits it or advertises 0.
+    /// maxMsgSize (0x05), defaulting to `DEFAULT_MAX_MSG_SIZE` when the device omits it or advertises 0.
     pub fn max_msg_size(&self) -> usize {
         // A device may report 0, which cannot bound any real message; treat it as unset.
         self.max_msg_size
@@ -631,10 +632,10 @@ mod test {
     }
 
     #[test]
-    fn max_msg_size_defaults_to_1024_when_absent() {
+    fn max_msg_size_defaults_to_10240_when_absent() {
         let info = Ctap2GetInfoResponse::default();
         assert_eq!(info.max_msg_size(), super::DEFAULT_MAX_MSG_SIZE);
-        assert_eq!(info.max_msg_size(), 1024);
+        assert_eq!(info.max_msg_size(), 10240);
     }
 
     #[test]

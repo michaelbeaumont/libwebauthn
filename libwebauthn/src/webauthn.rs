@@ -1021,13 +1021,13 @@ mod tests {
             );
         }
 
-        // maxMsgSize is absent, so the 1024-byte spec default must bound the request.
+        // maxMsgSize is absent, so the 10240-byte default must bound the request.
         #[test]
         fn request_over_default_max_msg_size_is_rejected() {
             let info = Ctap2GetInfoResponse::default();
-            assert_eq!(info.max_msg_size(), 1024);
-            // A single 2000-byte credential id keeps the count at 1 but blows past 1024 bytes.
-            let request = ctap2_get_assertion(vec![descriptor(&[0u8; 2000])]);
+            assert_eq!(info.max_msg_size(), 10240);
+            // A single 20000-byte credential id keeps the count at 1 but blows past 10240 bytes.
+            let request = ctap2_get_assertion(vec![descriptor(&[0u8; 20000])]);
             assert_eq!(
                 enforce_get_assertion_limits(&request, &info),
                 Err(PlatformError::RequestTooLarge)
